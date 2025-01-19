@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Signal Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        select, input[type="file"], button {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+        }
+        .graphs {
+            margin-top: 20px;
+        }
+        .graph {
+            margin-bottom: 20px;
+        }
+        img {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Audio Signal Analyzer</h1>
+        <form id="uploadForm">
+            <label for="file">Upload Audio File (MP3 or WAV):</label>
+            <input type="file" id="file" name="file" accept=".mp3, .wav" required>
+            
+            <label for="analysisType">Select Analysis Type:</label>
+            <select id="analysisType" name="analysis_type" required>
+                <option value="">-- Select an option --</option>
+                <option value="fft">FFT (Fast Fourier Transform)</option>
+                <option value="dft">DFT (Discrete Fourier Transform)</option>
+                <option value="stft">STFT (Short-Time Fourier Transform)</option>
+            </select>
+            
+            <button type="submit">Analyze</button>
+        </form>
+
+        <div id="results">
+            <!-- Existing elements -->
+            <div id="filtered-audio-container">
+              <h3>Filtered Audio</h3>
+              <a id="filtered-audio-link" href="#" target="_blank">Download Filtered Audio</a>
+            </div>
+          </div>
+          
+          <script>
+            document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+              e.preventDefault();
+          
+              const formData = new FormData(e.target);
+              const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData,
+              });
+          
+              const data = await response.json();
+          
+              if (data.filtered_audio_url) {
+                document.getElementById('filtered-audio-link').href = data.filtered_audio_url;
+                document.getElementById('filtered-audio-link').innerText = 'Download Filtered Audio';
+              }
+            });
+          </script>
+          
+
+        <div id="results" class="graphs">
+            <div class="graph">
+                <h3>Original Audio Waveform</h3>
+                <img id="originalWavePlot" src="" alt="Original Waveform" hidden>
+            </div>
+            <!-- <div class="graph">
+                <h3>Filtered Audio Waveform</h3>
+                <img id="filteredWavePlot" src="" alt="Filtered Waveform" hidden>
+            </div> -->
+            <div class="graph">
+                <h3>Analysis Graph</h3>
+                <img id="analysisGraph" src="" alt="Analysis Graph" hidden>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadForm = document.getElementById('uploadForm');
+        const originalWavePlot = document.getElementById('originalWavePlot');
+        // const filteredWavePlot = document.getElementById('filteredWavePlot');
+        const analysisGraph = document.getElementById('analysisGraph');
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(uploadForm);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(`Error: ${error.error}`);
+                    return;
+                }
+
+                const data = await response.json();
+                originalWavePlot.src = `data:image/png;base64,${data.original_wave_plot}`;
+                originalWavePlot.hidden = false;
+
+                // filteredWavePlot.src = `data:image/png;base64,${data.filtered_wave_plot}`;
+                // filteredWavePlot.hidden = false;
+
+                const analysisType = formData.get('analysis_type');
+                if (analysisType === 'fft' && data.fft_plot) {
+                    analysisGraph.src = `data:image/png;base64,${data.fft_plot}`;
+                } else if (analysisType === 'dft' && data.dft_plot) {
+                    analysisGraph.src = `data:image/png;base64,${data.dft_plot}`;
+                } else if (analysisType === 'stft' && data.stft_plot) {
+                    analysisGraph.src = `data:image/png;base64,${data.stft_plot}`;
+                }
+
+                analysisGraph.hidden = false;
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+    </script>
+</body>
+</html>
