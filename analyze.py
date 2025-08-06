@@ -134,6 +134,10 @@ def download_file(filename):
 def index():
     return render_template('index.html')
 
+@app.route('/hello')
+def hello():
+    return jsonify({"message": "hello"})
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files or 'analysis_type' not in request.form:
